@@ -9,11 +9,35 @@ class DispatchPolices {
 class Dispatcher {
 	terminal { _terminal }
 	numberOfListeners { _listeners.count }
-	
-	flags { _flags || ( DispatchPolices.callShallower | DispatchPolices.callDeeper ) }
-	callDeeper { flags & DispatchPolices.callDeeper != 0 }
-	callOne { flags & DispatchPolices.callOne != 0 }
-	callShallower { flags & DispatchPolices.callShallower != 0 }
+
+	flags { _flags }
+	callDeeper { ( flags & DispatchPolices.callDeeper ) != 0 }
+	callOne { ( flags & DispatchPolices.callOne ) != 0 }
+	callShallower { ( flags & DispatchPolices.callShallower ) != 0 }
+
+	callDeeper=(val){
+		if(val) {
+			_flags = _flags | DispatchPolices.callDeeper
+		} else {
+			_flags = _flags & ( ~DispatchPolices.callDeeper )
+		}
+	}
+
+	callOne=(val){
+		if(val) {
+			_flags = _flags | DispatchPolices.callOne
+		} else {
+			_flags = _flags & ( ~DispatchPolices.callOne )
+		}
+	}
+
+	callShallower=(val){
+		if(val) {
+			_flags = _flags | DispatchPolices.callShallower
+		} else {
+			_flags = _flags & ( ~DispatchPolices.callShallower )
+		}
+	}
 
 	transitiveNumberOfListeners {
 		var n = numberOfListeners
@@ -38,15 +62,18 @@ class Dispatcher {
 	}
 
 	construct root() {
-		_terminal = "*"
 		_childDispatchers = {}
+		_flags = 0
 		_listeners = []
+		_terminal = "*"
+		_root = true
 	}
 
 	construct new(terminal) {
-		_terminal = terminal
 		_childDispatchers = {}
+		_flags = 0
 		_listeners = []
+		_terminal = terminal
 	}
 
 	addListener(path, callable){
@@ -66,30 +93,31 @@ class Dispatcher {
 				_childDispatchers[head] = Dispatcher.new(head)
 			}
 
-			_childDispatchers[head].addListener(tail, callable)
+			return _childDispatchers[head].addListener(tail, callable)
 		}
-	}
-
-	dispatch(path, action, flags){
-		var defaultFlags = _flags
-		_flags = flags
-
-		dispatch(path, action)
-
-		_flags = defaultFlags
 	}
 
 	dispatch(path, action){
+		return dispatch(path, action, flags)
+	}
+
+	dispatch(path, action, callFlags){
+
+		_flags = callFlags
+
 		if(path is String){
-			return dispatch([path], action)
+			return dispatch([path], action, callFlags)
 		}
 
+		var results = []
 		if(path is List){
 			if(path.count == 0 || callShallower){
 				for(listener in _listeners){
-					var response = listener.call(action)
-					if(callOne && response){
-						return
+					results.add(listener.call(action))
+					System.print("res: %(results)")
+					if(results[-1] && callOne){
+						System.print("bail out %(results)")
+						return results
 					}
 				}
 			}
@@ -98,13 +126,17 @@ class Dispatcher {
 				var head = path[0]
 				var tail = path[1..-1]
 
-				_childDispatchers[head].dispatch(tail, action)
-			} else if(callDeeper){
-				for(child in _childDispatchers.values){
-					child.dispatch([], action)
+				if(!_childDispatchers[head]){
+					Fiber.abort("invalid path %(path)")
 				}
+
+				results.addAll(_childDispatchers[head].dispatch(tail, action, callFlags))
+
+				return results
 			}
 		}
+
+		System.print("%(path) | %(_terminal) | %(callFlags)")
+		return []
 	}
 }
-
