@@ -102,7 +102,6 @@ class Dispatcher {
 	}
 
 	dispatch(path, action, callFlags){
-
 		_flags = callFlags
 
 		if(path is String){
@@ -114,15 +113,13 @@ class Dispatcher {
 			if(path.count == 0 || callShallower){
 				for(listener in _listeners){
 					results.add(listener.call(action))
-					System.print("res: %(results)")
 					if(results[-1] && callOne){
-						System.print("bail out %(results)")
 						return results
 					}
 				}
 			}
 
-			if(path.count != 0){
+			if(path.count != 0){ 
 				var head = path[0]
 				var tail = path[1..-1]
 
@@ -134,9 +131,12 @@ class Dispatcher {
 
 				return results
 			}
+
+			if(callDeeper){
+				_childDispatchers.values.each { |cd| cd.dispatch([], action, callFlags) }
+			}
 		}
 
-		System.print("%(path) | %(_terminal) | %(callFlags)")
-		return []
+		return results
 	}
 }

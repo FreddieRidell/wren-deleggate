@@ -14,7 +14,6 @@ var dispatcher = Dispatcher.root()
 
 dispatcher.addListener("foo", Fn.new { |action|
 	System.print("(1) action: %(action)")
-	return "bean"
 })
 dispatcher.addListener("foo", Fn.new { |action|
 	System.print("(2) action: %(action)")
@@ -26,14 +25,13 @@ dispatcher.addListener(["foo", "bar"], Fn.new { |action|
 })
 dispatcher.addListener("qux", Fn.new { |action|
 	System.print("(4) action: %(action)")
+	return "bean"
 })
 
 System.print(dispatcher)
 
 var doStuff = Fn.new { |d|
-	System.print("%(d.callDeeper), %(d.callOne), %(d.callShallower)")
-
-	System.print("\n[foo]: x")
+	System.print("[foo]: x")
 	System.print(d.dispatch("foo", "x"))
 
 	System.print("\n[foo, bar]: y")
@@ -48,12 +46,24 @@ doStuff.call(dispatcher)
 
 System.print("\n\nwith call shallower")
 dispatcher.callShallower = true
+dispatcher.callDeeper = false
+dispatcher.callOne = false
 doStuff.call(dispatcher)
 
-/*System.print("\n\nwith call deeper")*/
-/*dispatcher.callDeeper = true*/
-/*doStuff.call(dispatcher)*/
+System.print("\n\nwith call deeper")
+dispatcher.callShallower = false
+dispatcher.callDeeper = true
+dispatcher.callOne = false
+doStuff.call(dispatcher)
 
-/*System.print("\n\nwith call one")*/
-/*dispatcher.callOne = true*/
-/*doStuff.call(dispatcher)*/
+System.print("\n\nwith call shallower & deeper") 
+dispatcher.callShallower = true
+dispatcher.callDeeper = true
+dispatcher.callOne = false
+doStuff.call(dispatcher)
+
+System.print("\n\nwith call shallower & deeper but stop on first truthy response") 
+dispatcher.callShallower = true
+dispatcher.callDeeper = true
+dispatcher.callOne = true
+doStuff.call(dispatcher)
