@@ -11,6 +11,7 @@ class Dispatcher {
 	numberOfListeners { _listeners.count }
 
 	flags { _flags }
+	flags=(val){ _flags = val }
 	callDeeper { ( flags & DispatchPolices.callDeeper ) != 0 }
 	callOne { ( flags & DispatchPolices.callOne ) != 0 }
 	callShallower { ( flags & DispatchPolices.callShallower ) != 0 }
@@ -58,14 +59,23 @@ class Dispatcher {
 			childNodes.add(child.treeify())
 		}
 
-		return Node.new("%(terminal) (%(numberOfListeners)/%(transitiveNumberOfListeners))", childNodes)
+		//return Node.new("%(terminal) (%(numberOfListeners)/%(transitiveNumberOfListeners))", childNodes)
+		return Node.new("%(terminal)", childNodes)
 	}
 
 	construct root() {
 		_childDispatchers = {}
 		_flags = 0
 		_listeners = []
-		_terminal = "*"
+		_terminal = ""
+		_root = true
+	}
+
+	construct root(name) {
+		_childDispatchers = {}
+		_flags = 0
+		_listeners = []
+		_terminal = name
 		_root = true
 	}
 

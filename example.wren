@@ -12,21 +12,21 @@ System.print("
 
 var dispatcher = Dispatcher.root()
 
-dispatcher.addListener("foo", Fn.new { |action|
+dispatcher.addListener("foo") { |action|
 	System.print("(1) action: %(action)")
-})
-dispatcher.addListener("foo", Fn.new { |action|
+}
+dispatcher.addListener("foo") { |action|
 	System.print("(2) action: %(action)")
 	return true
-})
-dispatcher.addListener(["foo", "bar"], Fn.new { |action|
+}
+dispatcher.addListener(["foo", "bar"]) { |action|
 	System.print("(3) action: %(action)")
 	return "(%(action))"
-})
-dispatcher.addListener("qux", Fn.new { |action|
+}
+dispatcher.addListener("qux") { |action|
 	System.print("(4) action: %(action)")
 	return "bean"
-})
+}
 
 System.print(dispatcher)
 
